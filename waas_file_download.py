@@ -26,9 +26,13 @@ import argparse
 import sys
 import xlsxwriter
 import json
+from multiprocessing.dummy import Pool as ThreadPool
 
 # Declare global variables
 logger = logging.getLogger(__name__)
+WORKER_COUNT = 25
+currentDevice = 0
+deviceCount = 0
 
 def warning(msg):
     logger.warning(msg)
@@ -299,20 +303,58 @@ def build_wae_list(waasList, ftpConfig, username, password, ftpUsername, ftpPass
     # Declare variables
     returnList = []
     
+    logger.info("Building WAE List")
+    
+    # Build FTP Config
+    myFtpConfig = {'username':ftpUsername, 'password':ftpPassword, 'filePath':str(ftpConfig['filePath']), 
+    'fileName':str(ftpConfig['fileName']), 'serverIP':str(ftpConfig['serverIP']), 'md5':str(ftpConfig['md5'])}
+    
     # Get configuration for each flex-connect group
     for line in waasList:
         if line.strip() != "":
             myWAE = WAE()
-            myWAE.ipAddress
-            #myFtpConfig = {'username':ftpUsername, 'password':ftpPassword, 'filePath':"", 'fileName':"", 'serverIP':"", 'md5':""}
-            myFtpConfig = {'username':ftpUsername, 'password':ftpPassword, 'filePath':str(ftpConfig['filePath']), 'fileName':str(ftpConfig['fileName']), 'serverIP':str(ftpConfig['serverIP']), 'md5':str(ftpConfig['md5'])}
-            myWAE.ftpConfig = myFtpConfig
+            myWAE.ipAddress = line.strip()
+            myWAE.username = username
+            myWAE.password = password
+            myWAE.ftpConfig = myFtpConfig.copy()
             returnList.append(myWAE)
-            
-            print(myWAE.ftpConfig)
 
     # Return None
     return returnList
+
+# Method download_image_worker
+#
+# Input: None
+# Output: None
+# Parameters: string the_list, string subString
+#
+# Return Value: -1 of error, index of first occurrence if found
+#####################################################################
+def download_image_worker(device):
+    # Declare variables
+    global currentDevice
+    global deviceCount
+    currentDevice = currentDevice + 1
+    myDeviceNum = long(currentDevice)
+    
+
+    logger.info("Starting worker for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount))
+    i = device.download_image(myDeviceNum)
+
+    # If discovered, parse data
+    if i == 0:
+        logger.info("Image Download Complete for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount))
+        return None
+    # Else printer error
+    elif i == -2:
+        logger.info("Bad username or password for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount))
+    elif i == -3:
+        logger.info("Image Download Failed for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount))
+    else:
+        logger.info("Image Download Failed for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount))
+
+    return None
+
 
 # Method main
 #
@@ -325,7 +367,8 @@ def build_wae_list(waasList, ftpConfig, username, password, ftpUsername, ftpPass
 def main(**kwargs):
     # Declare variables
     myWAEs = []
-    myAPs = []
+    global deviceCount
+
 
     # Set logging
     global headers
@@ -351,14 +394,33 @@ def main(**kwargs):
     # Close file
     myFile.close()
     
+    # Log info
+    logger.info("WAAS List Imported")
+    
     # Open file
     myFile = open(args.ftpConfig, 'r')
     # Read file into a list
     ftpConfig = json.load(myFile)
     # Close file
     myFile.close()
+    
+    # Log info
+    logger.info("FTP Config Imported")
+    
     # Build WAE List
     myWAEs = build_wae_list(waasList, ftpConfig, args.username, args.password, args.ftpUsername, args.ftpPassword)
+    
+    # Set Device count
+    deviceCount = len(myWAEs)
+    
+    # Build Thread Pool
+    pool = ThreadPool(WORKER_COUNT)
+    # Launch worker
+    results = pool.map(download_image_worker, myWAEs)
+
+    # Wait for all threads to complete
+    pool.close()
+    pool.join()
 
     return None
 
