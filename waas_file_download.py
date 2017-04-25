@@ -304,8 +304,8 @@ def build_wae_list(waasList, ftpConfig, username, password, ftpUsername, ftpPass
         if line.strip() != "":
             myWAE = WAE()
             myWAE.ipAddress
-            myFtpConfig = {'username':ftpUsername, 'password':ftpPassword}
-            myFtpConfig.update(ftpConfig)
+            myFtpConfig = {'username':ftpUsername, 'password':ftpPassword, 'filePath':str(ftpConfig['filePath']),
+            'fileName':str(ftpConfig['fileName']), 'serverIP':str(ftpConfig['serverIP']), 'md5':str(ftpConfig['6159eeb84c48dd396f1dfa9a1a03e8dc'])}
             myWAE.ftpConfig = myFtpConfig.copy()
             returnList.append(myWAE)
             
@@ -357,11 +357,7 @@ def main(**kwargs):
     ftpConfig = json.load(myFile)
     # Close file
     myFile.close()
-    
-    # Convert all ftpConfig items to string
-    ftpConfig = {str(k), str(v) for k, v in ftpConfig.items()}
-
-    # Build Flex Group List
+    # Build WAE List
     myWAEs = build_wae_list(waasList, ftpConfig, args.username, args.password, args.ftpUsername, args.ftpPassword)
 
     return None
