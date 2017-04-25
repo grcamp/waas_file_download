@@ -298,7 +298,7 @@ def write_xlsx_report(flexGroupList, apList, outputFile):
 def build_wae_list(waasList, ftpConfig, username, password, ftpUsername, ftpPassword):
     # Declare variables
     returnList = []
-
+    
     # Get configuration for each flex-connect group
     for line in waasList:
         if line.strip() != "":
@@ -357,6 +357,9 @@ def main(**kwargs):
     ftpConfig = json.load(myFile)
     # Close file
     myFile.close()
+    
+    # Convert all ftpConfig items to string
+    ftpConfig = {str(k), str(v) for k, v in ftpConfig.items()}
 
     # Build Flex Group List
     myWAEs = build_wae_list(waasList, ftpConfig, args.username, args.password, args.ftpUsername, args.ftpPassword)
