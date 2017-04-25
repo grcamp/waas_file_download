@@ -304,8 +304,8 @@ def build_wae_list(waasList, ftpConfig, username, password, ftpUsername, ftpPass
         if line.strip() != "":
             myWAE = WAE()
             myWAE.ipAddress
-            myFtpConfig = {'username':ftpUsername, 'password':ftpPassword, 'filePath':"", 'fileName':"", 'serverIP':"", 'md5':""}
-            #myFtpConfig = {'username':ftpUsername, 'password':ftpPassword, 'filePath':str(ftpConfig['filePath']), 'fileName':str(ftpConfig['fileName']), 'serverIP':str(ftpConfig['serverIP']), 'md5':str(ftpConfig['6159eeb84c48dd396f1dfa9a1a03e8dc'])}
+            #myFtpConfig = {'username':ftpUsername, 'password':ftpPassword, 'filePath':"", 'fileName':"", 'serverIP':"", 'md5':""}
+            myFtpConfig = {'username':ftpUsername, 'password':ftpPassword, 'filePath':str(ftpConfig['filePath']), 'fileName':str(ftpConfig['fileName']), 'serverIP':str(ftpConfig['serverIP']), 'md5':str(ftpConfig['md5'])}
             myWAE.ftpConfig = myFtpConfig
             returnList.append(myWAE)
             
