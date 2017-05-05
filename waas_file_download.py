@@ -26,6 +26,7 @@ import paramiko
 import sys
 import xlsxwriter
 import json
+import socket
 from multiprocessing.dummy import Pool as ThreadPool
 
 # Declare global variables
