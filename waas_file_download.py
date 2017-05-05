@@ -101,7 +101,7 @@ class WAE:
             logger.info("Logged into %s" % (self.ipAddress))
 
             # Clear transfer info
-            remote_conn.send("copy ftp disk %s %s %s %s" % (self.ftpConfig['serverIp'], self.ftpConfig['filePath'],
+            remote_conn.send("copy ftp disk %s %s %s %s" % (self.ftpConfig['serverIP'], self.ftpConfig['filePath'],
                                                             self.ftpConfig['fileName'], self.ftpConfig['fileName']))
             remote_conn.send("\n")
             wait_for_prompt(remote_conn, myLogFile, prompt="server:")
