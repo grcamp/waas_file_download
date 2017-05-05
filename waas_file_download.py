@@ -70,7 +70,6 @@ class WAE:
     def download_image(self):
         # Declare variables
         returnVal = 0
-        downloadAttempts = 0
 
         # Open Log File
         myLogFile = open(self.ipAddress + "_log.txt", 'a')
@@ -277,7 +276,7 @@ def download_image_worker(device):
     
 
     logger.info("Starting worker for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount)))
-    i = device.download_image(myDeviceNum)
+    i = device.download_image()
 
     # If discovered, parse data
     if i == 0:
@@ -306,7 +305,6 @@ def main(**kwargs):
     # Declare variables
     myWAEs = []
     global deviceCount
-
 
     # Set logging
     global headers
