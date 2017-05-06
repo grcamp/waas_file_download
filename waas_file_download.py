@@ -56,6 +56,7 @@ def fatal(msg):
 class WAE:
     def __init__(self):
         self.ipAddress = ""
+        self.hostname = ""
         self.username = ""
         self.password = ""
         self.ftpConfig = {}
@@ -100,6 +101,20 @@ class WAE:
             # Login successful
             logger.info("Logged into %s - %s of %s" % (self.ipAddress, str(deviceNumber), str(deviceCount)))
 
+            # Obtain hostname for prompts
+            remote_conn.send("show run | i hostn")
+            remote_conn.send("\n")
+            myOutput = wait_for_prompt(remote_conn, myLogFile)
+
+            lines = myOutput.split("\n")
+
+            for line in lines:
+                if "hostname" in line:
+                    self.hostname = line.strip().split()[1]
+
+            # Login successful
+            logger.info("Hostname for %s is %s - %s of %s" % (self.ipAddress, self.hostname, str(deviceNumber), str(deviceCount)))
+
             # Clear transfer info
             remote_conn.send("copy ftp disk %s %s %s %s" % (self.ftpConfig['serverIP'], self.ftpConfig['filePath'],
                                                             self.ftpConfig['fileName'], self.ftpConfig['fileName']))
@@ -111,11 +126,11 @@ class WAE:
             remote_conn.send(self.ftpConfig['password'])
             remote_conn.send("\n")
             wait_for_prompt(remote_conn, myLogFile)
-            wait_for_prompt(remote_conn, myLogFile, prompt="Downloaded", timeout=21600)
+            wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=21600)
             # Verify File
             remote_conn.send("md5sum %s" % (self.ftpConfig['fileName']))
             remote_conn.send("\n")
-            myOutput = wait_for_prompt(remote_conn, myLogFile)
+            myOutput = wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"))
 
             if self.ftpConfig['md5'] in myOutput:
                 returnVal = 0
