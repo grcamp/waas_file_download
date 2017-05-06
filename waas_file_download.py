@@ -165,7 +165,7 @@ class WAE:
 #
 # Return Value: -1 on error, 0 for successful discovery
 #####################################################################
-def wait_for_prompt(self, remote_conn, myLogFile, prompt="#", timeout=10):
+def wait_for_prompt(remote_conn, myLogFile, prompt="#", timeout=10):
     # Declare variables
     myOutput = ""
     allOutput = ""
