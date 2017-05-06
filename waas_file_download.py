@@ -68,7 +68,7 @@ class WAE:
     #
     # Return Value: -1 on error, 0 for successful discovery
     #####################################################################
-    def download_image(self):
+    def download_image(self, deviceNumber):
         # Declare variables
         returnVal = 0
 
@@ -98,7 +98,7 @@ class WAE:
                 return -2
 
             # Login successful
-            logger.info("Logged into %s" % (self.ipAddress))
+            logger.info("Logged into %s - %s of %s" % (self.ipAddress, str(deviceNumber), str(deviceCount)))
 
             # Clear transfer info
             remote_conn.send("copy ftp disk %s %s %s %s" % (self.ftpConfig['serverIP'], self.ftpConfig['filePath'],
@@ -277,7 +277,7 @@ def download_image_worker(device):
     
 
     logger.info("Starting worker for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount)))
-    i = device.download_image()
+    i = device.download_image(currentDevice)
 
     # If discovered, parse data
     if i == 0:
@@ -309,7 +309,7 @@ def main(**kwargs):
 
     # Set logging
     global headers
-    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG, format="%(asctime)s [%(levelname)8s]:  %(message)s")
+    logging.basicConfig(stream=sys.stderr, level=logging.INFO, format="%(asctime)s [%(levelname)8s]:  %(message)s")
 
     if kwargs:
         args = kwargs
