@@ -113,7 +113,7 @@ class WAE:
             wait_for_prompt(remote_conn, myLogFile)
             wait_for_prompt(remote_conn, myLogFile, prompt="Downloaded", timeout=21600)
             # Verify File
-            remote_conn.send("md5sum %s" % (self.ftpConfig['md5']))
+            remote_conn.send("md5sum %s" % (self.ftpConfig['fileName']))
             remote_conn.send("\n")
             myOutput = wait_for_prompt(remote_conn, myLogFile)
 
