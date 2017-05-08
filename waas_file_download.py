@@ -5,18 +5,17 @@
 # waas_file_download
 #
 # Testing Summary:
-#   Tested with FLEX 7500 WLCs show run-config output, but should work
-#   with any Cisco WLC.
+#   Tested on WAE 294 appliances running 5.5.9-b10
 #
 # Usage:
-#   ./cmx_runconfig_csv.py wlc_show-run-config input.csv -outfile.csv
-#   The best way to pull the WLC show run config is via file upload on
-#   WLC.  Must be performed by CLI.
-#   input.csv format: Site Name,Address,RSSI High Threshold,RSSI Low Threshold,Dwell Time in Minutes,Site Timezone
+#   ./waas_file_download.py waas_list.txt ftp_config.json -u username -p password
 #
 # Global Variables:
-#    logger = Used for Debug output and script info
-# #########################################################################
+#   logger = Used for Debug output and script info
+#   WORKER_COUNT = Maximum number of simultaneous threads
+#   currentDevice = Used for tracking the active device threads
+#   deviceCount = Used for tracking total device threads
+##########################################################################
 
 import os
 import logging
@@ -51,7 +50,7 @@ def fatal(msg):
 #########################################################################
 # Class WAE
 #
-# Container for networks
+# Container for WAAS appliances
 #########################################################################
 class WAE:
     def __init__(self):
@@ -85,7 +84,7 @@ class WAE:
             # Attempt to connection
             remote_conn_pre.connect(self.ipAddress, username=self.username, password=self.password, look_for_keys=False,
                                     allow_agent=False)
-            # Log into WLC
+            # Log into WAE
             remote_conn = remote_conn_pre.invoke_shell()
             time.sleep(15)
             myOutput = remote_conn.recv(65535)
@@ -94,6 +93,7 @@ class WAE:
 
             # Check if user prompt appears
             if "#" not in myOutput:
+                # if not exit method
                 myLogFile.close()
                 remote_conn.close()
                 return -2
@@ -104,10 +104,11 @@ class WAE:
             # Obtain hostname for prompts
             remote_conn.send("show run | i hostn")
             remote_conn.send("\n")
-            myOutput = wait_for_prompt(remote_conn, myLogFile)
+            myOutput = self._wait_for_prompt(remote_conn, myLogFile)
 
             lines = myOutput.split("\n")
 
+            # Search through output for hostname
             for line in lines:
                 if "hostname" in line:
                     self.hostname = line.strip().split()[1]
@@ -115,22 +116,23 @@ class WAE:
             # Login successful
             logger.info("Hostname for %s is %s - %s of %s" % (self.ipAddress, self.hostname, str(deviceNumber), str(deviceCount)))
 
-            # Clear transfer info
+            # Start FTP transfer
             remote_conn.send("copy ftp disk %s %s %s %s" % (self.ftpConfig['serverIP'], self.ftpConfig['filePath'],
                                                             self.ftpConfig['fileName'], self.ftpConfig['fileName']))
             remote_conn.send("\n")
-            wait_for_prompt(remote_conn, myLogFile, prompt="server:")
+            # Send login information
+            self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
             remote_conn.send(self.ftpConfig['username'])
             remote_conn.send("\n")
-            wait_for_prompt(remote_conn, myLogFile, prompt="server:")
+            self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
             remote_conn.send(self.ftpConfig['password'])
             remote_conn.send("\n")
-            wait_for_prompt(remote_conn, myLogFile)
-            wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=21600)
+            self._wait_for_prompt(remote_conn, myLogFile)
+            self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=21600)
             # Verify File
             remote_conn.send("md5sum %s" % (self.ftpConfig['fileName']))
             remote_conn.send("\n")
-            myOutput = wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"))
+            myOutput = self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"))
 
             if self.ftpConfig['md5'] in myOutput:
                 returnVal = 0
@@ -172,35 +174,37 @@ class WAE:
         # Return success
         return returnVal
 
-# Method wait_for_prompt
-#
-# Input: None
-# Output: None
-# Parameters: None
-#
-# Return Value: -1 on error, 0 for successful discovery
-#####################################################################
-def wait_for_prompt(remote_conn, myLogFile, prompt="#", timeout=10):
-    # Declare variables
-    myOutput = ""
-    allOutput = ""
-    i = 0
+    # Method _wait_for_prompt
+    #
+    # Input: None
+    # Output: None
+    # Parameters: None
+    #
+    # Return Value: -1 on error, 0 for successful discovery
+    #####################################################################
+    def _wait_for_prompt(self, remote_conn, myLogFile, prompt="#", timeout=10):
+        # Declare variables
+        myOutput = ""
+        allOutput = ""
+        i = 0
 
-    # Wait timeout seconds total
-    while i < timeout:
-        time.sleep(1)
-        myOutput = remote_conn.recv(65535)
-        allOutput = allOutput + myOutput
+        # Wait timeout seconds total
+        while i < timeout:
+            time.sleep(1)
+            myOutput = remote_conn.recv(65535)
+            allOutput = allOutput + myOutput
 
-        if prompt in myOutput:
-            i = timeout
+            if prompt in myOutput:
+                i = timeout
 
-        myLogFile.write(myOutput)
-        myLogFile.flush()
-        i = i + 1
+            myLogFile.write(myOutput)
+            myLogFile.flush()
+            i = i + 1
 
-    # Return None
-    return allOutput
+        # Return None
+        return allOutput
+
+
 
 # function write_xlsx_report
 #
