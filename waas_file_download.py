@@ -126,7 +126,6 @@ class WAE:
             myOutput = self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
             print(myOutput)
             if "already exists" not in myOutput:
-                print("debug 4")
                 remote_conn.send(self.ftpConfig['username'])
                 remote_conn.send("\n")
                 self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
@@ -201,16 +200,13 @@ class WAE:
         # Wait timeout seconds total
         while i < timeout:
             time.sleep(1)
-            print("debug 1")
 
             try:
                 myOutput = remote_conn.recv(65535)
             except:
                 myOutput = ""
 
-            print("debug 2")
             allOutput = allOutput + myOutput
-            print("debug 3")
 
             myLogFile.write(myOutput)
             myLogFile.flush()
@@ -219,7 +215,6 @@ class WAE:
                 i = timeout
 
             i = i + 1
-            print(str(i) + "," + str(timeout))
 
         # Change blocking mode to blocking
         remote_conn.setblocking(1)
@@ -332,8 +327,6 @@ def main(**kwargs):
     # Check for report input
     if args.report == None:
         args.report = "report.csv"
-
-
 
     # Open file
     myFile = open(args.waasList, 'r')
