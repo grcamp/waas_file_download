@@ -123,14 +123,16 @@ class WAE:
                                                             self.ftpConfig['fileName'], self.ftpConfig['fileName']))
             remote_conn.send("\n")
             # Send login information
-            self._wait_for_prompt(remote_conn, myLogFile, prompt="server:", timeout=10)
-            remote_conn.send(self.ftpConfig['username'])
-            remote_conn.send("\n")
-            self._wait_for_prompt(remote_conn, myLogFile, prompt="server:", timeout=10)
-            remote_conn.send(self.ftpConfig['password'])
-            remote_conn.send("\n")
-            self._wait_for_prompt(remote_conn, myLogFile, timeout=10)
-            self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=21600)
+            myOutput = self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
+            if "already exists" not in myOutput:
+                remote_conn.send(self.ftpConfig['username'])
+                remote_conn.send("\n")
+                self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
+                remote_conn.send(self.ftpConfig['password'])
+                remote_conn.send("\n")
+                self._wait_for_prompt(remote_conn, myLogFile)
+                self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=21600)
+
             # Verify File
             remote_conn.send("md5sum %s" % (self.ftpConfig['fileName']))
             remote_conn.send("\n")
