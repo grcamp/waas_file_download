@@ -26,6 +26,7 @@ import sys
 import xlsxwriter
 import json
 import socket
+import getpass
 from multiprocessing.dummy import Pool as ThreadPool
 
 # Declare global variables
@@ -59,6 +60,7 @@ class WAE:
         self.username = ""
         self.password = ""
         self.ftpConfig = {}
+        self.downloadComplete = False
 
     # Method download_image
     #
@@ -136,6 +138,7 @@ class WAE:
 
             if self.ftpConfig['md5'] in myOutput:
                 returnVal = 0
+                self.downloadComplete = True
             else:
                 returnVal = -3
 
@@ -338,8 +341,21 @@ def main(**kwargs):
         parser.add_argument('ftpConfig', help='FTP Config')
         parser.add_argument('-u', '--username', help='WAAS Username')
         parser.add_argument('-p', '--password', help='WAAS Password')
+        parser.add_argument('-r', '--report', help='CSV Report')
 
         args = parser.parse_args()
+
+    # Check for username input
+    if args.username == None:
+        args.username = raw_input("Username: ")
+    # Check for password input
+    if args.password == None:
+        args.password = getpass.getpass()
+    # Check for report input
+    if args.report == None:
+        args.report = "report.csv"
+
+
 
     # Open file
     myFile = open(args.waasList, 'r')
@@ -375,6 +391,19 @@ def main(**kwargs):
     # Wait for all threads to complete
     pool.close()
     pool.join()
+
+    # Log info
+    logger.info("Writing report to %s" % (args.report))
+
+    # Open file
+    with open(args.report, 'w') as reportFile:
+        # Print Header
+        reportFile.write("Name,IP Address,Download Complete\n")
+        # Print status of each WAE download
+        for myWAE in myWAEs:
+            reportFile.write("%s,%s,%s\n" % (myWAE.hostname, myWAE.ipAddress, str(myWAE.downloadComplete)))
+
+    reportFile.close()
 
     return None
 
