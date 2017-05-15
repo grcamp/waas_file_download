@@ -126,7 +126,7 @@ class WAE:
             myOutput = self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
             print(myOutput)
             if "already exists" not in myOutput:
-                print("debug 1")
+                print("debug 4")
                 remote_conn.send(self.ftpConfig['username'])
                 remote_conn.send("\n")
                 self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
@@ -198,8 +198,11 @@ class WAE:
         # Wait timeout seconds total
         while i < timeout:
             time.sleep(1)
+            print("debug 1")
             myOutput = remote_conn.recv(65535)
+            print("debug 2")
             allOutput = allOutput + myOutput
+            print("debug 3")
 
             if prompt in myOutput:
                 i = timeout
@@ -212,48 +215,6 @@ class WAE:
         # Return None
         return allOutput
 
-
-
-# function write_xlsx_report
-#
-# Input: None
-# Output: None
-# Parameters: None
-#
-# Return Value: None
-#####################################################################
-def write_xlsx_report(flexGroupList, apList, outputFile):
-    # Log state
-    logger.info("Writing Report to %s" % (outputFile))
-
-    # Build workbook and initialize worksheet
-    workbook = xlsxwriter.Workbook(outputFile)
-    worksheet = workbook.add_worksheet("FlexConnect Group Summary")
-
-    # Set headers
-    headingCellFormat = workbook.add_format({'bold': True, 'border': 1})
-    dataCellFormat = workbook.add_format({'border': 1})
-
-    # Set heading and initialize row and column variables
-    heading = ["Group Name", "Efficient Upgrade", "Joined Masters", "Disconnected Masters", "Joined APs",
-               "Disconnected APs", "Total APs"]
-
-    # Initialize row and col
-    row = 0
-    col = 0
-
-    # Write header and freeze top row
-    worksheet.write_row(row, col, heading, headingCellFormat)
-    worksheet.freeze_panes(1,0)
-
-    for group in flexGroupList:
-        row += 1
-        worksheet.write_row(row, col, group.get_xlsx_summary_list())
-
-    workbook.close()
-
-    # Return None
-    return None
 
 # Method build_wae_list
 #
