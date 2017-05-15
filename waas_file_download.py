@@ -195,22 +195,34 @@ class WAE:
         allOutput = ""
         i = 0
 
+        # Change blocking mode to non-blocking
+        remote_conn.setblocking(0)
+
         # Wait timeout seconds total
         while i < timeout:
             time.sleep(1)
             print("debug 1")
-            myOutput = remote_conn.recv(65535)
+
+            try:
+                myOutput = remote_conn.recv(65535)
+            except:
+                myOutput = ""
+
             print("debug 2")
             allOutput = allOutput + myOutput
             print("debug 3")
 
+            myLogFile.write(myOutput)
+            myLogFile.flush()
+
             if prompt in myOutput:
                 i = timeout
 
-            myLogFile.write(myOutput)
-            myLogFile.flush()
             i = i + 1
             print(str(i) + "," + str(timeout))
+
+        # Change blocking mode to blocking
+        remote_conn.setblocking(1)
 
         # Return None
         return allOutput
