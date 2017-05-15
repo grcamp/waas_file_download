@@ -126,6 +126,7 @@ class WAE:
             myOutput = self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
             print(myOutput)
             if "already exists" not in myOutput:
+                print("debug 1")
                 remote_conn.send(self.ftpConfig['username'])
                 remote_conn.send("\n")
                 self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
