@@ -203,6 +203,7 @@ class WAE:
             myLogFile.write(myOutput)
             myLogFile.flush()
             i = i + 1
+            print(str(i) + "," + str(timeout))
 
         # Return None
         return allOutput
