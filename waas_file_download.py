@@ -31,7 +31,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 # Declare global variables
 logger = logging.getLogger(__name__)
-WORKER_COUNT = 25
+WORKER_COUNT = 50
 currentDevice = 0
 deviceCount = 0
 
