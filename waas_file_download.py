@@ -23,7 +23,7 @@ import time
 import argparse
 import paramiko
 import sys
-import xlsxwriter
+import random
 import json
 import socket
 import getpass
@@ -269,7 +269,9 @@ def download_image_worker(device):
     global deviceCount
     currentDevice = currentDevice + 1
     myDeviceNum = long(currentDevice)
-    
+
+    # Start thread at random time between 0 and 10
+    time.sleep(float(random.randint(0,100))/10)
 
     logger.info("Starting worker for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount)))
     i = device.download_image(currentDevice)
@@ -357,6 +359,7 @@ def main(**kwargs):
     # Build Thread Pool
     pool = ThreadPool(WORKER_COUNT)
     # Launch worker
+    pool.
     results = pool.map(download_image_worker, myWAEs)
 
     # Wait for all threads to complete
