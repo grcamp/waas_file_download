@@ -359,7 +359,6 @@ def main(**kwargs):
     # Build Thread Pool
     pool = ThreadPool(WORKER_COUNT)
     # Launch worker
-    pool.
     results = pool.map(download_image_worker, myWAEs)
 
     # Wait for all threads to complete
