@@ -31,8 +31,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 # Declare global variables
 logger = logging.getLogger(__name__)
-WORKER_COUNT = 50
-currentDevice = 0
+WORKER_COUNT = 25
 deviceCount = 0
 
 def warning(msg):
@@ -61,6 +60,7 @@ class WAE:
         self.password = ""
         self.ftpConfig = {}
         self.downloadComplete = False
+        self.deviceNumber = 0
 
     # Method download_image
     #
@@ -70,7 +70,7 @@ class WAE:
     #
     # Return Value: -1 on error, 0 for successful discovery
     #####################################################################
-    def download_image(self, deviceNumber):
+    def download_image(self):
         # Declare variables
         returnVal = 0
 
@@ -101,7 +101,7 @@ class WAE:
                 return -2
 
             # Login successful
-            logger.info("Logged into %s - %s of %s" % (self.ipAddress, str(deviceNumber), str(deviceCount)))
+            logger.info("Logged into %s - %s of %s" % (self.ipAddress, str(self.deviceNumber), str(deviceCount)))
 
             # Obtain hostname for prompts
             remote_conn.send("show run | i hostn")
@@ -116,7 +116,7 @@ class WAE:
                     self.hostname = line.strip().split()[1]
 
             # Login successful
-            logger.info("Hostname for %s is %s - %s of %s" % (self.ipAddress, self.hostname, str(deviceNumber), str(deviceCount)))
+            logger.info("Hostname for %s is %s - %s of %s" % (self.ipAddress, self.hostname, str(self.deviceNumber), str(deviceCount)))
 
             # Start FTP transfer
             remote_conn.send("copy ftp disk %s %s %s %s" % (self.ftpConfig['serverIP'], self.ftpConfig['filePath'],
@@ -234,6 +234,7 @@ class WAE:
 def build_wae_list(waasList, ftpConfig, username, password):
     # Declare variables
     returnList = []
+    i = 1
     
     logger.info("Building WAE List")
     
@@ -250,7 +251,9 @@ def build_wae_list(waasList, ftpConfig, username, password):
             myWAE.username = username
             myWAE.password = password
             myWAE.ftpConfig = myFtpConfig.copy()
+            myWAE.deviceNumber = i
             returnList.append(myWAE)
+            i += 1
 
     # Return None
     return returnList
@@ -265,28 +268,25 @@ def build_wae_list(waasList, ftpConfig, username, password):
 #####################################################################
 def download_image_worker(device):
     # Declare variables
-    global currentDevice
     global deviceCount
-    currentDevice = currentDevice + 1
-    myDeviceNum = long(currentDevice)
 
     # Start thread at random time between 0 and 10
-    time.sleep(float(random.randint(0,100))/10)
+    time.sleep(device.deviceNumber)
 
-    logger.info("Starting worker for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount)))
-    i = device.download_image(currentDevice)
+    logger.info("Starting worker for %s - %s of %s" % (str(device.ipAddress), str(device.deviceNumber), str(deviceCount)))
+    i = device.download_image()
 
     # If discovered, parse data
     if i == 0:
-        logger.info("Image Download Complete for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount)))
+        logger.info("Image Download Complete for %s - %s of %s" % (str(device.ipAddress), str(device.deviceNumber), str(deviceCount)))
         return None
     # Else print error
     elif i == -2:
-        logger.info("Bad username or password for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount)))
+        logger.info("Bad username or password for %s - %s of %s" % (str(device.ipAddress), str(device.deviceNumber), str(deviceCount)))
     elif i == -3:
-        logger.info("Image Download Failed for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount)))
+        logger.info("Image Download Failed for %s - %s of %s" % (str(device.ipAddress), str(device.deviceNumber), str(deviceCount)))
     else:
-        logger.info("Image Download Failed for %s - %s of %s" % (str(device.ipAddress), str(myDeviceNum), str(deviceCount)))
+        logger.info("Image Download Failed for %s - %s of %s" % (str(device.ipAddress), str(device.deviceNumber), str(deviceCount)))
 
     return None
 
