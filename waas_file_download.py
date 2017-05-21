@@ -270,7 +270,7 @@ def download_image_worker(device):
     # Declare variables
     global deviceCount
 
-    # Start thread at random time between 0 and 10
+    # Start thread at time of device number value
     time.sleep(device.deviceNumber)
 
     logger.info("Starting worker for %s - %s of %s" % (str(device.ipAddress), str(device.deviceNumber), str(deviceCount)))
