@@ -119,14 +119,14 @@ class WAE:
             # Login successful
             logger.info("Hostname for %s is %s - %s of %s" % (self.ipAddress, self.hostname, str(self.deviceNumber), str(deviceCount)))
 
-            # Start FTP transfer
-            remote_conn.send("copy ftp disk %s %s %s %s" % (self.ftpConfig['serverIP'], self.ftpConfig['filePath'],
-                                                            self.ftpConfig['fileName'], self.ftpConfig['fileName']))
-            remote_conn.send("\n")
-            # Send login information
-            myOutput = self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
-
             while attempts < 2:
+                # Start FTP transfer
+                remote_conn.send("copy ftp disk %s %s %s %s" % (self.ftpConfig['serverIP'], self.ftpConfig['filePath'],
+                                                                self.ftpConfig['fileName'], self.ftpConfig['fileName']))
+                remote_conn.send("\n")
+                # Send login information
+                myOutput = self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
+
                 # Check if the file already exists
                 if "already exists" not in myOutput:
                     remote_conn.send(self.ftpConfig['username'])
@@ -150,7 +150,7 @@ class WAE:
                     attempts += 1
                     remote_conn.send("delfile %s" % (self.ftpConfig['fileName']))
                     remote_conn.send("\n")
-                    self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=10)
+                    self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"))
 
             # Logout
             remote_conn.send("exit")
