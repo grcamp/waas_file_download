@@ -134,7 +134,6 @@ class WAE:
                     self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
                     remote_conn.send(self.ftpConfig['password'])
                     remote_conn.send("\n")
-                    self._wait_for_prompt(remote_conn, myLogFile)
                     self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=21600)
 
                 # Verify File
@@ -151,8 +150,7 @@ class WAE:
                     attempts += 1
                     remote_conn.send("delfile %s" % (self.ftpConfig['fileName']))
                     remote_conn.send("\n")
-                    self._wait_for_prompt(remote_conn, myLogFile)
-                    self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=21600)
+                    self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=10)
 
             # Logout
             remote_conn.send("exit")
