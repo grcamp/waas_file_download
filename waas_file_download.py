@@ -73,6 +73,7 @@ class WAE:
     def download_image(self):
         # Declare variables
         returnVal = 0
+        attempts = 0
 
         # Open Log File
         myLogFile = open(self.ipAddress + "_log.txt", 'a')
@@ -125,25 +126,33 @@ class WAE:
             # Send login information
             myOutput = self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
 
-            if "already exists" not in myOutput:
-                remote_conn.send(self.ftpConfig['username'])
-                remote_conn.send("\n")
-                self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
-                remote_conn.send(self.ftpConfig['password'])
-                remote_conn.send("\n")
-                self._wait_for_prompt(remote_conn, myLogFile)
-                self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=21600)
+            while attempts < 2:
+                # Check if the file already exists
+                if "already exists" not in myOutput:
+                    remote_conn.send(self.ftpConfig['username'])
+                    remote_conn.send("\n")
+                    self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
+                    remote_conn.send(self.ftpConfig['password'])
+                    remote_conn.send("\n")
+                    self._wait_for_prompt(remote_conn, myLogFile)
+                    self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=21600)
 
-            # Verify File
-            remote_conn.send("md5sum %s" % (self.ftpConfig['fileName']))
-            remote_conn.send("\n")
-            myOutput = self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=60)
+                # Verify File
+                remote_conn.send("md5sum %s" % (self.ftpConfig['fileName']))
+                remote_conn.send("\n")
+                myOutput = self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=60)
 
-            if self.ftpConfig['md5'] in myOutput:
-                returnVal = 0
-                self.downloadComplete = True
-            else:
-                returnVal = -3
+                if self.ftpConfig['md5'] in myOutput:
+                    returnVal = 0
+                    self.downloadComplete = True
+                    attempts = 2
+                else:
+                    returnVal = -3
+                    attempts += 1
+                    remote_conn.send("delfile %s" % (self.ftpConfig['fileName']))
+                    remote_conn.send("\n")
+                    self._wait_for_prompt(remote_conn, myLogFile)
+                    self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=21600)
 
             # Logout
             remote_conn.send("exit")
