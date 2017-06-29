@@ -61,6 +61,7 @@ class WAE:
         self.ftpConfig = {}
         self.downloadComplete = False
         self.deviceNumber = 0
+        self.verifyOnly = False
 
     # Method download_image
     #
@@ -120,21 +121,23 @@ class WAE:
             logger.info("Hostname for %s is %s - %s of %s" % (self.ipAddress, self.hostname, str(self.deviceNumber), str(deviceCount)))
 
             while attempts < 2:
-                # Start FTP transfer
-                remote_conn.send("copy ftp disk %s %s %s %s" % (self.ftpConfig['serverIP'], self.ftpConfig['filePath'],
-                                                                self.ftpConfig['fileName'], self.ftpConfig['fileName']))
-                remote_conn.send("\n")
-                # Send login information
-                myOutput = self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
+                # Only download if verifyOnly is set to False
+                if self.verifyOnly == False:
+                    # Start FTP transfer
+                    remote_conn.send("copy ftp disk %s %s %s %s" % (self.ftpConfig['serverIP'], self.ftpConfig['filePath'],
+                                                                    self.ftpConfig['fileName'], self.ftpConfig['fileName']))
+                    remote_conn.send("\n")
+                    # Send login information
+                    myOutput = self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
 
-                # Check if the file already exists
-                if "already exists" not in myOutput:
-                    remote_conn.send(self.ftpConfig['username'])
-                    remote_conn.send("\n")
-                    self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
-                    remote_conn.send(self.ftpConfig['password'])
-                    remote_conn.send("\n")
-                    self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=21600)
+                    # Check if the file already exists
+                    if "already exists" not in myOutput:
+                        remote_conn.send(self.ftpConfig['username'])
+                        remote_conn.send("\n")
+                        self._wait_for_prompt(remote_conn, myLogFile, prompt="server:")
+                        remote_conn.send(self.ftpConfig['password'])
+                        remote_conn.send("\n")
+                        self._wait_for_prompt(remote_conn, myLogFile, prompt=(self.hostname + "#"), timeout=21600)
 
                 # Verify File
                 remote_conn.send("md5sum %s" % (self.ftpConfig['fileName']))
@@ -144,6 +147,10 @@ class WAE:
                 if self.ftpConfig['md5'] in myOutput:
                     returnVal = 0
                     self.downloadComplete = True
+                    attempts = 2
+                elif self.verifyOnly == True:
+                    returnVal = -3
+                    self.downloadComplete = False
                     attempts = 2
                 else:
                     returnVal = -3
@@ -238,7 +245,7 @@ class WAE:
 #
 # Return Value: None
 #####################################################################
-def build_wae_list(waasList, ftpConfig, username, password):
+def build_wae_list(waasList, ftpConfig, username, password, verifyOnly):
     # Declare variables
     returnList = []
     i = 1
@@ -259,6 +266,7 @@ def build_wae_list(waasList, ftpConfig, username, password):
             myWAE.password = password
             myWAE.ftpConfig = myFtpConfig.copy()
             myWAE.deviceNumber = i
+            myWAE.verifyOnly = verifyOnly
             returnList.append(myWAE)
             i += 1
 
@@ -324,6 +332,7 @@ def main(**kwargs):
         parser.add_argument('-u', '--username', help='WAAS Username')
         parser.add_argument('-p', '--password', help='WAAS Password')
         parser.add_argument('-r', '--report', help='CSV Report')
+        parser.add_argument('--verify', action='store_true', default=False, help='Only Verify if correct file exists')
 
         args = parser.parse_args()
 
@@ -358,7 +367,7 @@ def main(**kwargs):
     logger.info("FTP Config Imported")
     
     # Build WAE List
-    myWAEs = build_wae_list(waasList, ftpConfig, args.username, args.password)
+    myWAEs = build_wae_list(waasList, ftpConfig, args.username, args.password, args.verify)
     
     # Set Device count
     deviceCount = len(myWAEs)
